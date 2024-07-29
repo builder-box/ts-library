@@ -1,0 +1,134 @@
+name: Continuos Integration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    outputs:
+      node-version: ${{ steps.global-config.outputs.node-version }}
+      npm-cache-key: ${{ steps.global-config.outputs.npm-cache-key }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Global Configuration
+        id: global-config
+        run: |
+          nodeVersion=$(cat package.json | jq -r '.engines.node // "" | match("(\\.*[0-9]+)+$") | .string // ""')
+          npmCacheKey=npm-cache-${{ github.run_id }}
+
+          echo "node-version=$nodeVersion" >> $GITHUB_OUTPUT
+          echo "npm-cache-key=$npmCacheKey" >> $GITHUB_OUTPUT
+
+          {
+            echo "### :gear: Setup"
+            echo " - **Node Version**: $nodeVersion"
+          } >> $GITHUB_STEP_SUMMARY
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.global-config.outputs.node-version }}
+      - name: Install Dependencies
+        run: npm ci --ignore-scripts --no-audit
+      - name: Save NPM Cache
+        uses: actions/cache/save@v4
+        with:
+          path: node_modules
+          key: ${{ steps.global-config.outputs.npm-cache-key }}
+  code-quality:
+    name: Code Quality
+    needs: [setup]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.global-config.outputs.node-version }}
+      - name: Restore NPM Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: ${{ needs.setup.outputs.npm-cache-key }}
+      - name: Audit Report
+        run: npm run audit
+      - name: Linter Report
+        run: npm run lint
+  unit-tests:
+    name: Unit Tests
+    needs: [setup, code-quality]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.global-config.outputs.node-version }}
+      - name: Restore NPM Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: ${{ needs.setup.outputs.npm-cache-key }}
+      - name: Running Tests
+        run: npm t -- --coverage
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          directory: .coverage
+          dry_run: ${{ env.ACT }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          codecov_yml_path: .config/.codecov.yml
+  integration-tests:
+    name: Integration Tests Node:${{ matrix.node-version }} OS:${{ matrix.os }}
+    needs: [setup, unit-tests]
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.allow_failures }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        node-version: [21, 22]
+        allow_failures: [false]
+        # include:
+        #   - node-version: 23
+        #     allow_failures: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install Dependencies
+        run: npm i --no-package-lock --ignore-scripts --no-audit
+      - name: Running Tests
+        run: npm run test:integration
+  build:
+    name: Build Process
+    needs: [setup, integration-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.global-config.outputs.node-version }}
+      - name: Restore NPM Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: ${{ needs.setup.outputs.npm-cache-key }}
+      - name: Build Library
+        run: npm run build
+      - name: Build Documentation
+        run: npm run docs

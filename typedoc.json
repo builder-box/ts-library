@@ -6,6 +6,7 @@
   "entryPoints": ["./src"],
   "darkHighlightTheme": "dark-plus",
   "lightHighlightTheme": "dark-plus",
+  "plugin": ["typedoc-github-theme"],
   "validation": {
     "invalidLink": true,
     "notExported": true

@@ -1,8 +1,12 @@
 {
-  "eslint.packageManager": "yarn",
+  "eslint.enable": true,
+  "eslint.lintTask.options": "-c .config/eslint.config.mjs",
+  "prettier.enable": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "vsintellicode.java.completionsEnabled": false,
+  "vsintellicode.typescript.completionsEnabled": true,
   "editor.formatOnSave": true,
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.json-language-features"
   }
 }

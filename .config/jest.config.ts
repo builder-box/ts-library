@@ -1,8 +1,9 @@
-import { Config } from "@jest/types"
-import { defaults as tsjPreset } from "ts-jest/presets"
+import { Config } from "@jest/types";
+import { createDefaultPreset } from "ts-jest";
 
 export default {
   verbose: true,
+  rootDir: "../",
   testEnvironment: "node",
   testMatch: ["**/__tests__/**/*.(spec|test).[jt]s?(x)"],
   testPathIgnorePatterns: ["/node_modules/"],
@@ -20,12 +21,8 @@ export default {
   collectCoverageFrom: ["./src/**/*.ts"],
   moduleFileExtensions: ["js", "json", "ts"],
   transform: {
-    ...tsjPreset.transform,
-    "^.+\\.tsx?$": [
-      "ts-jest",
-      { disableSourceMapSupport: true, tsconfig: "<rootDir>/tsconfig.json" },
-    ],
+    ...createDefaultPreset().transform,
   },
   transformIgnorePatterns: ["/node_modules/"],
   modulePathIgnorePatterns: ["fixtures"],
-} as Config.InitialOptions
+} as Config.InitialOptions;
