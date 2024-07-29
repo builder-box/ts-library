@@ -11,24 +11,24 @@ These steps will guide you through contributing to this project:
 git clone https://github.com/YOUR-USERNAME/ts-library.git
 ```
 
-- Install dependencies using yarn
+- Install dependencies using npm
 
 ```bash
-yarn install
+npm install
 ```
 
 - Make sure to run all test commands.
 
 ```bash
-yarn lint:fix
-yarn test
-yarn test:integration
+npm run lint:fix
+npm test
+npm run test:integration
 ```
 
 - Make sure you can run a build successfully.
 
 ```bash
-yarn build
+npm run build
 ```
 
-- Finally send a [GitHub Pull Request](https://github.com/ElMijo/ts-library/compare/main...ElMijo:main) with a clear list of what you've done (read more [about pull requests](https://help.github.com/articles/about-pull-requests/)). Make sure all of your commits are atomic (one feature per commit).
+- Finally send a [GitHub Pull Request](https://github.com/builder-box/ts-library/compare/main...builder-box:main) with a clear list of what you've done (read more [about pull requests](https://help.github.com/articles/about-pull-requests/)). Make sure all of your commits are atomic (one feature per commit).
